@@ -1,0 +1,24 @@
+# Qt build artifacts
+*.o
+*.moc
+*.pro.user
+.qmake.stash
+Makefile
+moc_predefs.h
+
+# Executable files
+dfm_pattern_capture
+design_layout_viewer
+
+# Backup and temporary files
+*.bak
+*.tmp
+
+# OASIS test files
+*.oas
+
+# Virtual environment
+.venv/
+
+# Miscellaneous
+gBolt/
