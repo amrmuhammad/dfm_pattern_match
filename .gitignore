@@ -3,7 +3,6 @@
 *.moc
 *.pro.user
 .qmake.stash
-Makefile
 moc_predefs.h
 
 # Executable files

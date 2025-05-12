@@ -867,6 +867,7 @@ void LayoutWidget::wheelEvent(QWheelEvent *event) {
 }
 
 // main function to be added
+#ifndef IS_TEST_BUILD
 int main(int argc, char *argv[]) {
     qInstallMessageHandler(myMessageOutput); // Install before QApplication
     QApplication app(argc, argv);
@@ -983,3 +984,4 @@ int main(int argc, char *argv[]) {
     // }
     return app.exec();
 }
+#endif // IS_TEST_BUILD

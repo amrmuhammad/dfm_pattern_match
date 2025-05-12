@@ -23,6 +23,7 @@
 // Class for displaying and interacting with GDSII/OASIS layout data
 class LayoutWidget : public QWidget {
     Q_OBJECT // Macro for Qt's meta-object system (signals, slots, etc.)
+    friend class TestLayoutWidget;
 
 public:
     // Constructor
@@ -110,7 +111,7 @@ private:
     bool m_is_panning = false;  // Flag indicating if panning is active
 
     // --- Zoom Constants ---
-    static constexpr double MIN_ZOOM = 1e-5;  // Minimum zoom factor
+    static constexpr double MIN_ZOOM = 1e-5;  // Minimum zoom factore
     static constexpr double MAX_ZOOM = 10.0; // Maximum zoom factor
     static constexpr double ZOOM_STEP = 1.2; // Zoom step increment
 

@@ -1,0 +1,10 @@
+#include "layoutwidget.h"
+#include <QPainter>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QWheelEvent>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QDebug>
+#include <cmath>
+#include "gdstk/gdstk.hpp"
