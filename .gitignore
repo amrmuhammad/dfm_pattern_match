@@ -1,23 +1,47 @@
 # Qt build artifacts
 *.o
-*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
 *.pro.user
+*.pro.user.*
 .qmake.stash
 moc_predefs.h
 
 # Executable files
 dfm_pattern_capture
 design_layout_viewer
+testlayoutwidget
+dfm_pattern_match
+Makefile
 
 # Backup and temporary files
 *.bak
 *.tmp
+*~
 
-# OASIS test files
-*.oas
+# Log files
+*.log
+debug_log.txt
+valgrind_output.txt
 
 # Virtual environment
 .venv/
 
-# Miscellaneous
-gBolt/
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor/IDE specific
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# gdb history
+.gdb_history
+
+# If you have specific output OASIS files you want to ignore, add them here, e.g.:
+# output_*.oas
