@@ -6,7 +6,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QVBoxLayout>
-#include <QDebug> // Added QDebug include
+#include <QDebug>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QJsonDocument> // For parsing JSONB properties // Added QDebug include
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -119,8 +123,91 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
 void MainWindow::on_actionOpenPatternLibrary_triggered()
 {
     qDebug() << "Action 'Open a pattern library' triggered!";
-    // Placeholder for actual database loading logic
-    // For example, you might open a dialog to select a library from the DB
-    // or directly load a pre-configured one.
-    QMessageBox::information(this, "Open Pattern Library", "Functionality to open pattern library from database is not yet implemented.");
+
+    QSqlDatabase db = QSqlDatabase::database(); // Get the existing connection if already added, or add a new one.
+    if (!db.isValid()) {
+        db = QSqlDatabase::addDatabase("QPSQL");
+        db.setHostName("localhost");
+        db.setDatabaseName("patterns_library");
+        db.setUserName("test123");
+        db.setPassword("test123");
+    }
+
+    bool connectionOpen = db.isOpen();
+    if (!connectionOpen) {
+        connectionOpen = db.open();
+    }
+
+    if (!connectionOpen) {
+        qDebug() << "Database connection failed:";
+        qDebug() << db.lastError().text();
+        QMessageBox::critical(this, "Database Error",
+            tr("Failed to connect to the pattern library database: %1").arg(db.lastError().text()));
+        return;
+    }
+
+    qDebug() << "Database connection successful! Querying patterns...";
+    m_patternModel->clearPatterns(); // Clear existing patterns
+
+    QSqlQuery query(db);
+    if (!query.exec("SELECT id, name, description, gds_data, category, tags, properties FROM patterns ORDER BY name")) {
+        qDebug() << "Failed to query patterns:";
+        qDebug() << query.lastError().text();
+        QMessageBox::warning(this, "Query Error",
+            tr("Failed to retrieve patterns from the database: %1").arg(query.lastError().text()));
+        // db.close(); // Consider if we want to close on query failure or keep open for other ops
+        return;
+    }
+
+    int patternsLoaded = 0;
+    while (query.next()) {
+        Pattern pattern;
+        pattern.setId(query.value("id").toInt());
+        pattern.setName(query.value("name").toString());
+        pattern.setDescription(query.value("description").toString());
+        pattern.setGdsData(query.value("gds_data").toByteArray());
+        pattern.setCategory(query.value("category").toString());
+        
+        // Handle TEXT[] for tags - QPSQL driver might return QStringList directly or QVariantList
+        QVariant tagsVariant = query.value("tags");
+        if (tagsVariant.typeId() == QMetaType::QStringList) {
+            pattern.setTags(tagsVariant.toStringList());
+        } else if (tagsVariant.typeId() == QMetaType::QVariantList) {
+            QStringList tagsList;
+            for (const QVariant& item : tagsVariant.toList()) {
+                tagsList.append(item.toString());
+            }
+            pattern.setTags(tagsList);
+        } else if (tagsVariant.typeId() == QMetaType::QString) { // Fallback: sometimes it's a string like "{tag1,tag2}"
+            QString tagsString = tagsVariant.toString();
+            if (tagsString.startsWith('{') && tagsString.endsWith('}')) {
+                tagsString = tagsString.mid(1, tagsString.length() - 2);
+            }
+            if (!tagsString.isEmpty()) {
+                 pattern.setTags(tagsString.split(','));
+            }
+        }
+
+        QByteArray jsonData = query.value("properties").toByteArray();
+        if (!jsonData.isNull() && !jsonData.isEmpty()) {
+            QJsonDocument doc = QJsonDocument::fromJson(jsonData);
+            if (doc.isObject()) {
+                pattern.setProperties(doc.object());
+            }
+        }
+        
+        m_patternModel->addPattern(pattern);
+        patternsLoaded++;
+    }
+
+    if (patternsLoaded > 0) {
+        QMessageBox::information(this, "Open Pattern Library",
+            tr("Successfully loaded %1 patterns from the database.").arg(patternsLoaded));
+    } else {
+        QMessageBox::information(this, "Open Pattern Library",
+            tr("Successfully connected to the database. No patterns found or loaded."));
+    }
+
+    // db.close(); // Decide on connection management strategy - often good to keep it open while app runs.
+    // For now, the default QSqlDatabase connection will persist until app closes or it's explicitly removed.
 }

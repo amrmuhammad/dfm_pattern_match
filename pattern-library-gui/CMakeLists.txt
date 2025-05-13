@@ -15,7 +15,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Find Qt libraries
-find_package(Qt5 COMPONENTS Core Gui Widgets Sql REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Sql REQUIRED)
 find_package(OpenGL REQUIRED)
 
 # Source files
@@ -82,10 +82,10 @@ configure_file(
 # Link Qt libraries
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE
-        Qt5::Core 
-        Qt5::Gui 
-        Qt5::Widgets
-        Qt5::Sql
+        Qt6::Core 
+        Qt6::Gui 
+        Qt6::Widgets
+        Qt6::Sql
         OpenGL::GL
 )
 
