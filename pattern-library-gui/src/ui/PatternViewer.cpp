@@ -8,7 +8,7 @@
 
 PatternViewer::PatternViewer(QWidget *parent)
     : QWidget(parent)
-    , m_patterns() // Initialize m_patterns
+    , m_layer_patterns() // Initialize m_layer_patterns
     , m_scale(1.0)
     , m_panning(false)
 {
@@ -17,22 +17,25 @@ PatternViewer::PatternViewer(QWidget *parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
-void PatternViewer::setPattern(const QList<QPolygonF> &patterns)
+void PatternViewer::setPattern(const QMap<int, QList<QPolygonF>>& layer_patterns)
 {
-    m_patterns = patterns;
-    if (!m_patterns.isEmpty()) {
+    m_layer_patterns = layer_patterns;
+    if (!m_layer_patterns.isEmpty()) {
         QRectF totalBounds;
-        for (const QPolygonF &poly : m_patterns) {
-            if (totalBounds.isNull()) {
-                totalBounds = poly.boundingRect();
-            } else {
-                totalBounds = totalBounds.united(poly.boundingRect());
+        for (const QList<QPolygonF>& poly_list : m_layer_patterns.values()) {
+            for (const QPolygonF &poly : poly_list) {
+                if (totalBounds.isNull()) {
+                    totalBounds = poly.boundingRect();
+                } else {
+                    totalBounds = totalBounds.united(poly.boundingRect());
+                }
             }
         }
         m_patternBounds = totalBounds;
-        resetView();
+        resetView(); // This will also call update()
     } else {
         m_patternBounds = QRectF(); // Reset bounds if no patterns
+        m_layer_patterns.clear(); // Ensure it's clear
         update(); // Request a repaint to clear the view
     }
 }
@@ -53,21 +56,18 @@ void PatternViewer::zoomOut()
 
 void PatternViewer::resetView()
 {
-    if (m_patterns.isEmpty() || !m_patternBounds.isValid() || m_patternBounds.isEmpty())
+    if (m_layer_patterns.isEmpty() || !m_patternBounds.isValid() || m_patternBounds.isEmpty())
         return;
 
     QRectF viewRect = rect();
     if (viewRect.isEmpty() || m_patternBounds.width() == 0 || m_patternBounds.height() == 0) {
-        // Avoid division by zero if view or pattern bounds are degenerate
         m_scale = 1.0;
         m_pan = QPointF(viewRect.width()/2, viewRect.height()/2);
     } else {
-        // Calculate scale to fit pattern in view with some margin
         qreal xScale = viewRect.width() / m_patternBounds.width();
         qreal yScale = viewRect.height() / m_patternBounds.height();
         m_scale = qMin(xScale, yScale) * 0.9;
 
-        // Center the pattern
         QPointF center = m_patternBounds.center();
         m_pan = QPointF(viewRect.width()/2, viewRect.height()/2) - center * m_scale;
     }
@@ -81,17 +81,16 @@ void PatternViewer::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // Fill background
     painter.fillRect(rect(), Qt::white);
 
-    // Draw grid
     QPen gridPen(Qt::lightGray, 0);
     painter.setPen(gridPen);
     
-    qreal gridStep = 50.0 / m_scale;
+    qreal gridStep = 50.0 / m_scale; // Adjust grid step based on zoom
     QPointF topLeft = mapToScene(QPoint(0, 0));
     QPointF bottomRight = mapToScene(QPoint(width(), height()));
     
+    // Draw grid lines
     for (qreal x = qFloor(topLeft.x()/gridStep)*gridStep; x < bottomRight.x(); x += gridStep) {
         painter.drawLine(mapFromScene(QPointF(x, topLeft.y())), 
                         mapFromScene(QPointF(x, bottomRight.y())));
@@ -101,13 +100,28 @@ void PatternViewer::paintEvent(QPaintEvent *)
                         mapFromScene(QPointF(bottomRight.x(), y)));
     }
 
-    // Draw patterns
-    if (!m_patterns.isEmpty()) {
-        painter.setPen(QPen(Qt::blue, 0)); // Pen thickness 0 means cosmetic pen
-        painter.setBrush(QBrush(QColor(200, 200, 255, 100)));
+    if (!m_layer_patterns.isEmpty()) {
         painter.setTransform(m_transform);
-        for (const QPolygonF &poly : m_patterns) {
-            painter.drawPolygon(poly);
+        QList<QColor> layerColors = {
+            QColor(200, 200, 255, 150), // Light Blue
+            QColor(255, 200, 200, 150), // Light Red
+            QColor(200, 255, 200, 150), // Light Green
+            QColor(255, 255, 200, 150), // Light Yellow
+            QColor(200, 255, 255, 150), // Light Cyan
+            QColor(255, 200, 255, 150)  // Light Magenta
+        };
+        int colorIndex = 0;
+        for (auto it = m_layer_patterns.constBegin(); it != m_layer_patterns.constEnd(); ++it) {
+            const QList<QPolygonF>& poly_list = it.value();
+            
+            QColor baseColor = layerColors[colorIndex % layerColors.size()];
+            painter.setPen(QPen(baseColor.darker(150), 0)); 
+            painter.setBrush(QBrush(baseColor));
+            
+            for (const QPolygonF &poly : poly_list) {
+                painter.drawPolygon(poly);
+            }
+            colorIndex++;
         }
     }
 }

@@ -115,17 +115,17 @@ void MainWindow::onExportPattern()
 void MainWindow::onPatternSelected(const QModelIndex& index)
 {
     if (!index.isValid()) {
-        m_patternViewer->setPattern(QList<QPolygonF>()); // Clear viewer if no selection
+        m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer if no selection
         return;
     }
 
     Pattern selectedPattern = m_patternModel->getPattern(index.row());
     QByteArray gdsBytes = selectedPattern.gdsData();
-    QList<QPolygonF> displayGeometries; // Initialize list for polygons
+    QMap<int, QList<QPolygonF>> displayLayerGeometries; // Map to store polygons grouped by layer
 
     if (gdsBytes.isEmpty()) {
         qDebug() << "Selected pattern has no GDS data.";
-        m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list
+        m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list
         return;
     }
 
@@ -134,7 +134,7 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
         qint64 bytesWritten = tempFile.write(gdsBytes);
         if (bytesWritten != gdsBytes.size()) {
             qDebug() << "Error writing all GDS data to temporary file:" << tempFile.errorString();
-            m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list on error
+            m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list on error
             tempFile.close();
             return;
         }
@@ -160,10 +160,11 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
                     for (size_t i = 0; i < cell->polygon_array.count; ++i) {
                         gdstk::Polygon* poly = cell->polygon_array[i];
                         if (poly) { // Check if polygon is not null
-                            displayGeometries.append(FileHandler::convertGdstkPolygonToQt(poly));
+                            int layer = gdstk::get_layer(poly->tag);
+                            displayLayerGeometries[layer].append(FileHandler::convertGdstkPolygonToQt(poly));
                         }
                     }
-                    if (displayGeometries.isEmpty() && cell->polygon_array.count > 0) {
+                    if (displayLayerGeometries.isEmpty() && cell->polygon_array.count > 0) {
                          qDebug() << "First cell has polygons, but conversion might have failed or all were null.";
                     } else if (cell->polygon_array.count == 0) {
                         qDebug() << "First cell in GDS data has no polygons.";
@@ -182,11 +183,11 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
             // QTemporaryFile by default has autoRemove ON.
         }
         
-        m_patternViewer->setPattern(displayGeometries); // Set list of polygons
+        m_patternViewer->setPattern(displayLayerGeometries); // Set map of layer polygons
 
     } else {
         qDebug() << "Failed to open temporary file:" << tempFile.errorString();
-        m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list on error
+        m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list on error
         return;
     }
     // tempFile is automatically removed when it goes out of scope if open() succeeded.
