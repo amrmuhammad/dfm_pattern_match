@@ -1,0 +1,34 @@
+# CMake build files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Build directory
+build/
+
+# Qt Creator user files
+*.pro.user
+*.pro.user.*
+
+# Compiled Object files
+*.o
+*.obj
+
+# Executables (if you build them in source tree, adjust as needed)
+# For example, if your executable is named pattern_library_gui and is in root:
+# pattern_library_gui
+
+# Moc, UIC, RCC generated files (if in source tree, often better in build tree)
+# moc_*.cpp
+# ui_*.h
+# qrc_*.cpp
+
+# Other common ignores
+*.autosave
+*.bak
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
