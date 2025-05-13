@@ -5,6 +5,7 @@
 
 #include <QWidget>
 #include <QPolygonF>
+#include <QList> // Added for QList
 #include <QTransform>
 
 class PatternViewer : public QWidget {
@@ -14,7 +15,7 @@ public:
     explicit PatternViewer(QWidget *parent = nullptr);
 
 public slots:
-    void setPattern(const QPolygonF &pattern);
+    void setPattern(const QList<QPolygonF> &patterns); // Changed to accept a list
     void zoomIn();
     void zoomOut();
     void resetView();
@@ -31,7 +32,7 @@ private:
     QPointF mapToScene(const QPoint &pos) const;
     QPoint mapFromScene(const QPointF &pos) const;
 
-    QPolygonF m_pattern;
+    QList<QPolygonF> m_patterns; // Changed to a list of polygons
     QTransform m_transform;
     qreal m_scale;
     QPointF m_pan;
