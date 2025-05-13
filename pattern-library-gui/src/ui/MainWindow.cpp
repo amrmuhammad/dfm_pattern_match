@@ -10,7 +10,9 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QJsonDocument> // For parsing JSONB properties // Added QDebug include
+#include <QJsonDocument> // For parsing JSONB properties
+#include <QTemporaryFile> // For GDS parsing from QByteArray
+#include <gdstk/gdstk.hpp> // Make sure this is the correct include for gdstk main functionalities
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -112,12 +114,82 @@ void MainWindow::onExportPattern()
 
 void MainWindow::onPatternSelected(const QModelIndex& index)
 {
-    if (index.isValid()) {
-        Pattern pattern = m_patternModel->getPattern(index.row());
-        m_patternViewer->setPattern(pattern.geometry());
-    } else {
-        m_patternViewer->setPattern(QPolygonF());
+    if (!index.isValid()) {
+        m_patternViewer->setPattern(QList<QPolygonF>()); // Clear viewer if no selection
+        return;
     }
+
+    Pattern selectedPattern = m_patternModel->getPattern(index.row());
+    QByteArray gdsBytes = selectedPattern.gdsData();
+    QList<QPolygonF> displayGeometries; // Initialize list for polygons
+
+    if (gdsBytes.isEmpty()) {
+        qDebug() << "Selected pattern has no GDS data.";
+        m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list
+        return;
+    }
+
+    QTemporaryFile tempFile;
+    if (tempFile.open()) {
+        qint64 bytesWritten = tempFile.write(gdsBytes);
+        if (bytesWritten != gdsBytes.size()) {
+            qDebug() << "Error writing all GDS data to temporary file:" << tempFile.errorString();
+            m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list on error
+            tempFile.close();
+            return;
+        }
+        tempFile.close(); // Close the file so gdstk can open it for reading
+
+        gdstk::Library lib;
+        gdstk::ErrorCode error_code = gdstk::ErrorCode::NoError;
+        
+        lib = gdstk::read_gds(
+            tempFile.fileName().toStdString().c_str(),
+            0.0,     // unit (0.0 means use file's unit)
+            0.001,   // tolerance
+            nullptr, // shape_tags
+            &error_code
+        );
+
+        // QList<QPolygonF> displayGeometries; // Already declared at the start of the function
+
+        if (error_code == gdstk::ErrorCode::NoError) {
+            if (lib.cell_array.count > 0) {
+                gdstk::Cell* cell = lib.cell_array[0]; // Get the first cell
+                if (cell) { // Check if cell is not null
+                    for (size_t i = 0; i < cell->polygon_array.count; ++i) {
+                        gdstk::Polygon* poly = cell->polygon_array[i];
+                        if (poly) { // Check if polygon is not null
+                            displayGeometries.append(FileHandler::convertGdstkPolygonToQt(poly));
+                        }
+                    }
+                    if (displayGeometries.isEmpty() && cell->polygon_array.count > 0) {
+                         qDebug() << "First cell has polygons, but conversion might have failed or all were null.";
+                    } else if (cell->polygon_array.count == 0) {
+                        qDebug() << "First cell in GDS data has no polygons.";
+                    }
+                } else {
+                    qDebug() << "First cell in GDS data is null.";
+                }
+            } else {
+                qDebug() << "Selected GDS data has no cells.";
+            }
+            lib.clear(); // Don't forget to clear the library to free memory
+        } else {
+            qDebug() << "gdstk failed to read GDS from temporary file. Error code:" << static_cast<int>(error_code) << "File:" << tempFile.fileName();
+            // tempFile is automatically removed when it goes out of scope, but if gdstk errored,
+            // it might be useful to know the temp file wasn't immediately deleted if autoRemove is on.
+            // QTemporaryFile by default has autoRemove ON.
+        }
+        
+        m_patternViewer->setPattern(displayGeometries); // Set list of polygons
+
+    } else {
+        qDebug() << "Failed to open temporary file:" << tempFile.errorString();
+        m_patternViewer->setPattern(displayGeometries); // Clear viewer with empty list on error
+        return;
+    }
+    // tempFile is automatically removed when it goes out of scope if open() succeeded.
 }
 
 void MainWindow::on_actionOpenPatternLibrary_triggered()

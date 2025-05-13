@@ -16,9 +16,9 @@ public:
     static Pattern loadFromGds(const QString& filename);
     static void saveToOasis(const QString& filename, const Pattern& pattern);
     static void saveToGds(const QString& filename, const Pattern& pattern);
+    static QPolygonF convertGdstkPolygonToQt(const gdstk::Polygon* poly);
 
 private:
-    static QPolygonF convertGdstkPolygonToQt(const gdstk::Polygon* poly);
     static gdstk::Polygon* convertQtPolygonToGdstk(const QPolygonF& polygon);
 };
 

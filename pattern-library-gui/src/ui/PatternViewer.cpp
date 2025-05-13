@@ -8,6 +8,7 @@
 
 PatternViewer::PatternViewer(QWidget *parent)
     : QWidget(parent)
+    , m_patterns() // Initialize m_patterns
     , m_scale(1.0)
     , m_panning(false)
 {
@@ -16,14 +17,24 @@ PatternViewer::PatternViewer(QWidget *parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
-void PatternViewer::setPattern(const QPolygonF &pattern)
+void PatternViewer::setPattern(const QList<QPolygonF> &patterns)
 {
-    m_pattern = pattern;
-    if (!pattern.isEmpty()) {
-        m_patternBounds = pattern.boundingRect();
+    m_patterns = patterns;
+    if (!m_patterns.isEmpty()) {
+        QRectF totalBounds;
+        for (const QPolygonF &poly : m_patterns) {
+            if (totalBounds.isNull()) {
+                totalBounds = poly.boundingRect();
+            } else {
+                totalBounds = totalBounds.united(poly.boundingRect());
+            }
+        }
+        m_patternBounds = totalBounds;
         resetView();
+    } else {
+        m_patternBounds = QRectF(); // Reset bounds if no patterns
+        update(); // Request a repaint to clear the view
     }
-    update();
 }
 
 void PatternViewer::zoomIn()
@@ -42,18 +53,24 @@ void PatternViewer::zoomOut()
 
 void PatternViewer::resetView()
 {
-    if (m_pattern.isEmpty())
+    if (m_patterns.isEmpty() || !m_patternBounds.isValid() || m_patternBounds.isEmpty())
         return;
 
-    // Calculate scale to fit pattern in view with some margin
     QRectF viewRect = rect();
-    qreal xScale = viewRect.width() / m_patternBounds.width();
-    qreal yScale = viewRect.height() / m_patternBounds.height();
-    m_scale = qMin(xScale, yScale) * 0.9;
+    if (viewRect.isEmpty() || m_patternBounds.width() == 0 || m_patternBounds.height() == 0) {
+        // Avoid division by zero if view or pattern bounds are degenerate
+        m_scale = 1.0;
+        m_pan = QPointF(viewRect.width()/2, viewRect.height()/2);
+    } else {
+        // Calculate scale to fit pattern in view with some margin
+        qreal xScale = viewRect.width() / m_patternBounds.width();
+        qreal yScale = viewRect.height() / m_patternBounds.height();
+        m_scale = qMin(xScale, yScale) * 0.9;
 
-    // Center the pattern
-    QPointF center = m_patternBounds.center();
-    m_pan = QPointF(viewRect.width()/2, viewRect.height()/2) - center * m_scale;
+        // Center the pattern
+        QPointF center = m_patternBounds.center();
+        m_pan = QPointF(viewRect.width()/2, viewRect.height()/2) - center * m_scale;
+    }
 
     updateTransform();
     update();
@@ -84,12 +101,14 @@ void PatternViewer::paintEvent(QPaintEvent *)
                         mapFromScene(QPointF(bottomRight.x(), y)));
     }
 
-    // Draw pattern
-    if (!m_pattern.isEmpty()) {
-        painter.setPen(QPen(Qt::blue, 0));
+    // Draw patterns
+    if (!m_patterns.isEmpty()) {
+        painter.setPen(QPen(Qt::blue, 0)); // Pen thickness 0 means cosmetic pen
         painter.setBrush(QBrush(QColor(200, 200, 255, 100)));
         painter.setTransform(m_transform);
-        painter.drawPolygon(m_pattern);
+        for (const QPolygonF &poly : m_patterns) {
+            painter.drawPolygon(poly);
+        }
     }
 }
 
