@@ -20,6 +20,8 @@ public slots:
     void zoomIn();
     void zoomOut();
     void resetView();
+    void setLayerVisibility(int layerNum, bool visible);
+    void setAllLayersVisibility(bool visible);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -34,6 +36,7 @@ private:
     QPoint mapFromScene(const QPointF &pos) const;
 
     QMap<int, QList<QPolygonF>> m_layer_patterns; // Changed to a list of polygons
+    QMap<int, bool> m_layer_visibility; // Stores visibility state for each layer
     QTransform m_transform;
     qreal m_scale;
     QPointF m_pan;

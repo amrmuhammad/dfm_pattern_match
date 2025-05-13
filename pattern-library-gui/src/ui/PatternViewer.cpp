@@ -20,7 +20,11 @@ PatternViewer::PatternViewer(QWidget *parent)
 void PatternViewer::setPattern(const QMap<int, QList<QPolygonF>>& layer_patterns)
 {
     m_layer_patterns = layer_patterns;
+    m_layer_visibility.clear(); // Clear previous visibility states
     if (!m_layer_patterns.isEmpty()) {
+        for (int layerNum : m_layer_patterns.keys()) {
+            m_layer_visibility.insert(layerNum, true); // Initially all layers visible
+        }
         QRectF totalBounds;
         for (const QList<QPolygonF>& poly_list : m_layer_patterns.values()) {
             for (const QPolygonF &poly : poly_list) {
@@ -36,6 +40,7 @@ void PatternViewer::setPattern(const QMap<int, QList<QPolygonF>>& layer_patterns
     } else {
         m_patternBounds = QRectF(); // Reset bounds if no patterns
         m_layer_patterns.clear(); // Ensure it's clear
+        // m_layer_visibility is already cleared
         update(); // Request a repaint to clear the view
     }
 }
@@ -112,14 +117,17 @@ void PatternViewer::paintEvent(QPaintEvent *)
         };
         int colorIndex = 0;
         for (auto it = m_layer_patterns.constBegin(); it != m_layer_patterns.constEnd(); ++it) {
+            int layerNum = it.key(); // Get current layer number
             const QList<QPolygonF>& poly_list = it.value();
             
             QColor baseColor = layerColors[colorIndex % layerColors.size()];
             painter.setPen(QPen(baseColor.darker(150), 0)); 
             painter.setBrush(QBrush(baseColor));
             
-            for (const QPolygonF &poly : poly_list) {
-                painter.drawPolygon(poly);
+            if (m_layer_visibility.value(layerNum, true)) { // Check visibility, default to true
+                for (const QPolygonF &poly : poly_list) {
+                    painter.drawPolygon(poly);
+                }
             }
             colorIndex++;
         }
@@ -188,4 +196,20 @@ QPointF PatternViewer::mapToScene(const QPoint &pos) const
 QPoint PatternViewer::mapFromScene(const QPointF &pos) const
 {
     return m_transform.map(pos).toPoint();
+}
+
+void PatternViewer::setLayerVisibility(int layerNum, bool visible)
+{
+    if (m_layer_visibility.contains(layerNum)) {
+        m_layer_visibility[layerNum] = visible;
+        update(); // Request a repaint
+    }
+}
+
+void PatternViewer::setAllLayersVisibility(bool visible)
+{
+    for (auto it = m_layer_visibility.begin(); it != m_layer_visibility.end(); ++it) {
+        it.value() = visible;
+    }
+    update(); // Request a repaint
 }

@@ -12,6 +12,7 @@
 #include <QSqlError>
 #include <QJsonDocument> // For parsing JSONB properties
 #include <QTemporaryFile> // For GDS parsing from QByteArray
+#include <QListWidget> // Add this for QListWidget and QListWidgetItem
 #include <gdstk/gdstk.hpp> // Make sure this is the correct include for gdstk main functionalities
 
 MainWindow::MainWindow(QWidget *parent)
@@ -49,6 +50,9 @@ void MainWindow::createConnections()
     connect(ui->exportButton, &QPushButton::clicked, this, &MainWindow::onExportPattern);
     connect(ui->patternListView->selectionModel(), &QItemSelectionModel::currentChanged,
             this, &MainWindow::onPatternSelected);
+    if (ui->layerListWidget) { // Check if it's available
+        connect(ui->layerListWidget, &QListWidget::itemChanged, this, &MainWindow::onLayerListItemChanged);
+    }
 }
 
 void MainWindow::onImportPattern()
@@ -114,6 +118,9 @@ void MainWindow::onExportPattern()
 
 void MainWindow::onPatternSelected(const QModelIndex& index)
 {
+    if (ui->layerListWidget) {
+        ui->layerListWidget->clear();
+    }
     if (!index.isValid()) {
         m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer if no selection
         return;
@@ -125,6 +132,9 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
 
     if (gdsBytes.isEmpty()) {
         qDebug() << "Selected pattern has no GDS data.";
+        if (ui->layerListWidget) {
+            ui->layerListWidget->clear();
+        }
         m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list
         return;
     }
@@ -134,6 +144,9 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
         qint64 bytesWritten = tempFile.write(gdsBytes);
         if (bytesWritten != gdsBytes.size()) {
             qDebug() << "Error writing all GDS data to temporary file:" << tempFile.errorString();
+            if (ui->layerListWidget) {
+                ui->layerListWidget->clear();
+            }
             m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list on error
             tempFile.close();
             return;
@@ -185,12 +198,45 @@ void MainWindow::onPatternSelected(const QModelIndex& index)
         
         m_patternViewer->setPattern(displayLayerGeometries); // Set map of layer polygons
 
+        if (ui->layerListWidget) {
+            ui->layerListWidget->clear(); // Clear previous layer list
+            if (!displayLayerGeometries.isEmpty()) {
+                // Block signals temporarily to prevent itemChanged from firing during population
+                bool oldSignalsBlocked = ui->layerListWidget->blockSignals(true);
+
+                QList<int> layerKeys = displayLayerGeometries.keys();
+                std::sort(layerKeys.begin(), layerKeys.end()); // Sort keys for consistent order
+
+                for (int layerNum : layerKeys) {
+                    QListWidgetItem *item = new QListWidgetItem(QString("Layer %1").arg(layerNum), ui->layerListWidget);
+                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                    item->setCheckState(Qt::Checked); // Initially checked
+                    item->setData(Qt::UserRole, layerNum);
+                }
+                m_patternViewer->setAllLayersVisibility(true); // Sync viewer state
+
+                ui->layerListWidget->blockSignals(oldSignalsBlocked); // Restore signals
+            }
+        }
+
     } else {
         qDebug() << "Failed to open temporary file:" << tempFile.errorString();
+        if (ui->layerListWidget) {
+            ui->layerListWidget->clear();
+        }
         m_patternViewer->setPattern(QMap<int, QList<QPolygonF>>()); // Clear viewer with empty list on error
         return;
     }
     // tempFile is automatically removed when it goes out of scope if open() succeeded.
+}
+
+void MainWindow::onLayerListItemChanged(QListWidgetItem *item)
+{
+    if (!item || !m_patternViewer) return; // Basic safety check
+
+    int layerNum = item->data(Qt::UserRole).toInt();
+    bool isVisible = (item->checkState() == Qt::Checked);
+    m_patternViewer->setLayerVisibility(layerNum, isVisible);
 }
 
 void MainWindow::on_actionOpenPatternLibrary_triggered()

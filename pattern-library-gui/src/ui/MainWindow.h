@@ -5,6 +5,8 @@
 #include "../models/PatternModel.h"
 #include "PatternViewer.h"
 
+class QListWidgetItem; // Forward declaration
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -21,6 +23,7 @@ private slots:
     void onExportPattern();
     void onPatternSelected(const QModelIndex& index);
     void on_actionOpenPatternLibrary_triggered();
+    void onLayerListItemChanged(QListWidgetItem *item);
 
 private:
     void setupUi();
