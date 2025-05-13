@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>850</width>
+    <height>650</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>DFM Pattern Library Manager</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_Main">
+    <item>
+     <widget class="QWidget" name="leftPanel" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_Left">
+       <item>
+        <widget class="QListView" name="patternListView"/>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_Buttons">
+         <item>
+          <widget class="QPushButton" name="importButton">
+           <property name="text">
+            <string>Import Pattern</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="exportButton">
+           <property name="text">
+            <string>Export Pattern</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="previewContainer" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <!-- MainWindow.cpp is expected to add PatternViewer to this container's layout -->
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>850</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpenPatternLibrary"/>
+    <!-- Add other file actions here e.g. <addaction name="actionExit"/> -->
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpenPatternLibrary">
+   <property name="text">
+    <string>Open a pattern library</string>
+   </property>
+   <!-- <property name="shortcut"><string>Ctrl+O</string></property> -->
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import Pattern</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="text">
+    <string>Export Pattern</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PatternBrowser</class>
+   <extends>QWidget</extends>
+   <header>ui/PatternBrowser.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PatternViewer</class>
+   <extends>QWidget</extends>
+   <header>ui/PatternViewer.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

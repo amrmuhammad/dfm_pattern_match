@@ -1,0 +1,59 @@
+<!-- filepath: /home/amrmuhammad/dev/dfm_pattern_match/pattern-library-gui/ui/mainwindow.ui -->
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>DFM Pattern Library</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <widget class="QMenuBar" name="menuBar">
+     <addAction name="menuFile"/>
+     <addAction name="menuEdit"/>
+     <addAction name="menuView"/>
+     <addAction name="menuTools"/>
+     <addAction name="menuHelp"/>
+    </widget>
+    <widget class="QStatusBar" name="statusBar"/>
+   </layout>
+  </widget>
+  <menuBar>
+   <menu name="menuFile" text="File">
+    <action name="actionConnect"/>
+    <action name="actionDisconnect"/>
+    <action name="actionImport"/>
+    <action name="actionExport"/>
+    <action name="actionExit"/>
+   </menu>
+   <menu name="menuEdit" text="Edit">
+    <action name="actionCopy"/>
+    <action name="actionPaste"/>
+    <action name="actionDelete"/>
+   </menu>
+   <menu name="menuView" text="View">
+    <action name="actionZoom"/>
+    <action name="actionGrid"/>
+    <action name="actionLayerVisibility"/>
+   </menu>
+   <menu name="menuTools" text="Tools">
+    <action name="actionBatchOperations"/>
+    <action name="actionSettings"/>
+   </menu>
+   <menu name="menuHelp" text="Help">
+    <action name="actionDocumentation"/>
+    <action name="actionAbout"/>
+   </menu>
+  </menuBar>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

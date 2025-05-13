@@ -1,0 +1,43 @@
+<!-- filepath: /pattern-library-gui/ui/patternviewer.ui -->
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PatternViewer</class>
+ <widget class="QWidget" name="PatternViewer">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Pattern Viewer</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGraphicsView" name="graphicsView"/>
+   </item>
+   <item>
+    <widget class="QToolBar" name="toolBar">
+     <property name="windowTitle">
+      <string>Tools</string>
+     </property>
+     <action name="zoomInAction">
+      <property name="text">
+       <string>Zoom In</string>
+      </property>
+     </action>
+     <action name="zoomOutAction">
+      <property name="text">
+       <string>Zoom Out</string>
+      </property>
+     </action>
+     <action name="resetViewAction">
+      <property name="text">
+       <string>Reset View</string>
+      </property>
+     </action>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

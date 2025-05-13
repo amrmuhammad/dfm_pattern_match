@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/libclipper.a CMakeFiles/clipper.dir/clipper_autogen/mocs_compilation.cpp.o CMakeFiles/clipper.dir/clipper/clipper.cpp.o
+/usr/bin/ranlib ../../lib/libclipper.a

@@ -1,0 +1,6 @@
+clipper_autogen/timestamp: \
+	/home/amrmuhammad/dev/dfm_pattern_match/gdstk/external/CMakeLists.txt \
+	/home/amrmuhammad/dev/dfm_pattern_match/gdstk/external/clipper/clipper.cpp \
+	/home/amrmuhammad/dev/dfm_pattern_match/gdstk/external/clipper/clipper.hpp \
+	/usr/share/cmake-3.28/Modules/GNUInstallDirs.cmake \
+	/usr/bin/cmake
